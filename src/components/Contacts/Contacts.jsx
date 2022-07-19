@@ -1,23 +1,25 @@
 import Contact from "./Contact";
 import Spinner from "../Spinner";
-
-import { Fragment } from "react";
 import { CURRENTLINE, ORANGE, PINK } from "../../helpers/colors";
-
+import { Link } from "react-router-dom";
 // import NotFound from "../../assets/no-found.gif";
 
-const Contacts = ({ contacts, loading }) => {
+const Contacts = ({ contacts, loading, confirmDelete }) => {
   return (
-    <Fragment>
+    <>
       <section className="container">
         <div className="grid">
           <div className="row">
             <div className="col">
-              <p className="h3">
-                <button className="btn mx-2" style={{ backgroundColor: PINK }}>
+              <p className="h3 float-end">
+                <Link
+                  to="/contacts/add"
+                  className="btn m-2"
+                  style={{ backgroundColor: PINK }}
+                >
                   ساخت مخاطب جدید
-                  <i className="fa fa-plus-circle mx-2"></i>
-                </button>
+                  <i className="fa fa-plus-circle mx-2" />
+                </Link>
               </p>
             </div>
           </div>
@@ -29,7 +31,13 @@ const Contacts = ({ contacts, loading }) => {
         <section className="container">
           <div className="row">
             {contacts.length > 0 ? (
-              contacts.map((c) => <Contact key={c.id} contact={c} />)
+              contacts.map((c) => (
+                <Contact
+                  key={c.id}
+                  contact={c}
+                  confirmDelete={() => confirmDelete(c.id, c.fullname)}
+                />
+              ))
             ) : (
               <div
                 className="text-center py-5"
@@ -38,10 +46,9 @@ const Contacts = ({ contacts, loading }) => {
                 <p className="h3" style={{ color: ORANGE }}>
                   مخاطب یافت نشد ...
                 </p>
-                {/*<img src={NotFound} alt="یافت نشد" className="w-25" />*/}
                 <img
                   src={require("../../assets/no-found.gif")}
-                  alt="یافت نشد"
+                  alt="پیدا نشد"
                   className="w-25"
                 />
               </div>
@@ -49,7 +56,7 @@ const Contacts = ({ contacts, loading }) => {
           </div>
         </section>
       )}
-    </Fragment>
+    </>
   );
 };
 
