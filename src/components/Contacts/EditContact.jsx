@@ -1,85 +1,86 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
+
 import { Link, useNavigate, useParams } from "react-router-dom";
 
+import { ContactContext } from '../../context/contactContext';
 import {
   getContact,
-  getAllGroups,
   updateContact,
 } from "../../services/contactService";
 
 import { Spinner } from "../";
 import { COMMENT, ORANGE, PURPLE } from "../../helpers/colors";
 
-const EditContact = ({ forceRender, setForceRender }) => {
+const EditContact = () => {
   const { contactId } = useParams();
+  const { contacts, setContacts, setFilteredContacts, loading, setLoading, groups } = useContext(ContactContext);
   const navigate = useNavigate();
 
-  const [state, setState] = useState({
-    loading: false,
-    contact: {
-      fullname: "",
-      photo: "",
-      mobile: "",
-      email: "",
-      job: "",
-      group: "",
-    },
-    groups: [],
-  });
+  const [contact, setContact] = useState({});
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setState({ ...state, loading: true });
+        setLoading(true);
 
         const { data: contactData } = await getContact(contactId);
-        const { data: groupsData } = await getAllGroups();
 
-        setState({
-          ...state,
-          loading: false,
-          contact: contactData,
-          groups: groupsData,
-        });
+        setLoading(false);
+        setContact(contactData);
       } catch (err) {
         console.log(err.message);
-        setState({ ...state, loading: false });
+        setLoading(false);
       }
     };
 
     fetchData();
   }, []);
 
-  const setContactInfo = (event) => {
-    setState({
-      ...state,
-      contact: {
-        ...state.contact,
-        [event.target.name]: [event.target.value],
-      },
-    });
+  const onContactChange = (event) => {
+    setContact({
+      ...contact,
+      [event.target.name]: event.target.value,
+    },
+    );
   };
 
   const submitForm = async (event) => {
     event.preventDefault();
     try {
-      setState({ ...state, loading: true });
+      setLoading(true);
 
-      const { data } = await updateContact(state.contact, contactId);
+      // Copy State
+      // Update State
+      // Send Request 
+      // Status === 200 => do nothing
+      // Status === error => setState(copyState)
+      const { data, status } = await updateContact(contact, contactId);
 
-      setState({ ...state, loading: false });
+      /*
+      * NOTE
+      * 1- forceRender -> setForceRender(true)
+      * 2- Send Request Server
+      * 3- Update local state
+      * 4- Update local state before sending request to server
+      */
 
-      if (data) {
-        setForceRender(!forceRender);
+      if (status === 200) {
+        setLoading(false);
+
+        const allContacts = [...contacts];
+        const contactIndex = allContacts.findIndex(c => c.id === parseInt(contactId));
+        allContacts[contactIndex] = { ...data };
+
+        setContacts(allContacts);
+        setFilteredContacts(allContacts);
+
         navigate("/contacts");
       }
     } catch (err) {
       console.log(err.message);
-      setState({ ...state, loading: false });
+      setLoading(false);
     }
   };
-
-  const { loading, contact, groups } = state;
 
   return (
     <>
@@ -109,7 +110,7 @@ const EditContact = ({ forceRender, setForceRender }) => {
                         type="text"
                         className="form-control"
                         value={contact.fullname}
-                        onChange={setContactInfo}
+                        onChange={onContactChange}
                         required={true}
                         placeholder="نام و نام خانوادگی"
                       />
@@ -119,7 +120,7 @@ const EditContact = ({ forceRender, setForceRender }) => {
                         name="photo"
                         type="text"
                         value={contact.photo}
-                        onChange={setContactInfo}
+                        onChange={onContactChange}
                         className="form-control"
                         required={true}
                         placeholder="آدرس تصویر"
@@ -131,7 +132,7 @@ const EditContact = ({ forceRender, setForceRender }) => {
                         type="number"
                         className="form-control"
                         value={contact.mobile}
-                        onChange={setContactInfo}
+                        onChange={onContactChange}
                         required={true}
                         placeholder="شماره موبایل"
                       />
@@ -142,7 +143,7 @@ const EditContact = ({ forceRender, setForceRender }) => {
                         type="email"
                         className="form-control"
                         value={contact.email}
-                        onChange={setContactInfo}
+                        onChange={onContactChange}
                         required={true}
                         placeholder="آدرس ایمیل"
                       />
@@ -153,7 +154,7 @@ const EditContact = ({ forceRender, setForceRender }) => {
                         type="text"
                         className="form-control"
                         value={contact.job}
-                        onChange={setContactInfo}
+                        onChange={onContactChange}
                         required={true}
                         placeholder="شغل"
                       />
@@ -162,7 +163,7 @@ const EditContact = ({ forceRender, setForceRender }) => {
                       <select
                         name="group"
                         value={contact.group}
-                        onChange={setContactInfo}
+                        onChange={onContactChange}
                         required={true}
                         className="form-control"
                       >
@@ -195,6 +196,7 @@ const EditContact = ({ forceRender, setForceRender }) => {
                 <div className="col-md-4">
                   <img
                     src={contact.photo}
+                    alt={contact.fullname}
                     className="img-fluid rounded"
                     style={{ border: `1px solid ${PURPLE}` }}
                   />
