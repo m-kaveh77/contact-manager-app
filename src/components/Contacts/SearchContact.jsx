@@ -5,7 +5,9 @@ import { ContactContext } from '../../context/contactContext';
 import { PURPLE } from "../../helpers/colors";
 
 const SearchContact = () => {
-  const { contactQuery, contactSearch } = useContext(ContactContext);
+
+  // contactQuery,
+  const { contactSearch } = useContext(ContactContext);
 
   return (
     <div className="input-group mx-2 w-75" dir="ltr">
@@ -19,8 +21,8 @@ const SearchContact = () => {
       <input
         dir="rtl"
         type="text"
-        value={contactQuery.text}
-        onChange={contactSearch}
+        // value={contactQuery.text}
+        onChange={event => contactSearch(event.target.value)}
         className="form-control"
         placeholder="جستجوی مخاطب"
         aria-label="Search"

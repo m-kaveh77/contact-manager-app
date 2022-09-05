@@ -3,14 +3,15 @@ import { createContext } from 'react';
 export const ContactContext = createContext({
     loading: false,
     setLoading: () => { },
-    contact: {},
+    // contact: {},
     setContacts: () => { },
     setFilteredContacts: () => { },
     contacts: [],
+    // errors: [],
     filteredContacts: [],
-    contactQuery: {},
+    // contactQuery: {},
     groups: [],
-    onContactChange: () => { },
+    // onContactChange: () => { },
     deleteContact: () => { },
     createContact: () => { },
     contactSearch: () => { }

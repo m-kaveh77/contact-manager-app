@@ -1,6 +1,12 @@
 import { useState, useEffect } from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { confirmAlert } from "react-confirm-alert";
+import { useImmer } from 'use-immer';
+// import { ToastContainer, toast } from "react-toastify";
+import toast, { Toaster } from 'react-hot-toast';
+
+import _ from 'lodash';
+// Underline or Underscore
 
 import { ContactContext } from "./context/contactContext";
 import {
@@ -26,14 +32,17 @@ import {
   YELLOW,
   COMMENT,
 } from "./helpers/colors";
+// import { contactSchema } from './validations/contactValidation'
 
 const App = () => {
-  const [loading, setLoading] = useState(false);
-  const [contacts, setContacts] = useState([]);
-  const [filteredContacts, setFilteredContacts] = useState([]);
-  const [groups, setGroups] = useState([]);
-  const [contact, setContact] = useState({});
-  const [contactQuery, setContactQuery] = useState({ text: "" });
+  const [loading, setLoading] = useImmer(false); // useState
+  const [contacts, setContacts] = useImmer([]); // useState
+  const [filteredContacts, setFilteredContacts] = useImmer([]); // useState
+  const [groups, setGroups] = useImmer([]); // useState
+
+  // const [contact, setContact] = useState({});
+  // const [errors, setErrors] = useState([]);
+  // const [contactQuery, setContactQuery] = useState({ text: "" });
 
   const navigate = useNavigate();
 
@@ -59,11 +68,17 @@ const App = () => {
     fetchData();
   }, []);
 
-  const createContactForm = async (event) => {
-    event.preventDefault();
+  const createContactForm = async (values) => { // event
+    // event.preventDefault();
+
     try {
-      setLoading((prevLoading) => !prevLoading);
-      const { status, data } = await createContact(contact);
+      // setLoading((prevLoading) => !prevLoading);
+      setLoading(draft => !draft);
+
+      // YUP Validation
+      // await contactSchema.validate(contact, { abortEarly: false });
+
+      const { status, data } = await createContact(values);
 
       /*
        * NOTE
@@ -72,27 +87,35 @@ const App = () => {
        */
 
       if (status === 201) {
-        const allContacts = [...contacts, data];
+        toast.success("مخاطب با موفقیت ساخته شد", { icon: "🔥" });
+        // const allContacts = [...contacts, data];
 
-        setContacts(allContacts);
-        setFilteredContacts(allContacts);
+        // setContacts(allContacts);
+        // setFilteredContacts(allContacts);
 
-        setContact({});
-        setLoading((prevLoading) => !prevLoading);
+        setContacts(draft => { draft.push(data) });
+        setFilteredContacts(draft => { draft.push(data) });
+
+        // setContact({});
+        // setErrors([]);
+        // setLoading((prevLoading) => !prevLoading);
+        setLoading(draft => !draft);
         navigate("/contacts");
       }
     } catch (err) {
       console.log(err.message);
+      // console.log(err.inner);
+      // setErrors(err.inner);
       setLoading((prevLoading) => !prevLoading);
     }
   };
 
-  const onContactChange = (event) => {
-    setContact({
-      ...contact,
-      [event.target.name]: event.target.value,
-    });
-  };
+  // const onContactChange = (event) => {
+  //   setContact({
+  //     ...contact,
+  //     [event.target.name]: event.target.value,
+  //   });
+  // };
 
   const confirmDelete = (contactId, contactFullname) => {
     confirmAlert({
@@ -144,59 +167,87 @@ const App = () => {
     */
 
     // Contacts Copy
-    const allContacts = [...contacts];
+    const contactsBackup = [...contacts];
 
     try {
-      const updatedContacts = contacts.filter(c => c.id !== contactId);
+      // const updatedContacts = contacts.filter(c => c.id !== contactId);
 
-      setContacts(updatedContacts);
-      setFilteredContacts(updatedContacts);
+      // setContacts(updatedContacts);
+      // setFilteredContacts(updatedContacts);
+
+      setContacts(draft => draft.filter(c => c.id !== contactId));
+      setFilteredContacts(draft => draft.filter(c => c.id !== contactId));
 
       // Sending Delete Request to Server
       const { status } = await deleteContact(contactId);
 
+      toast.error("مخاطب با موفقیت ساخته شد", { icon: "🔥" });
+
       if (status !== 200) {
-        setContacts(allContacts);
-        setFilteredContacts(allContacts);
+        setContacts(contactsBackup);
+        setFilteredContacts(contactsBackup);
       }
     } catch (err) {
       console.log(err.message);
 
-      setContacts(allContacts);
-      setFilteredContacts(allContacts);
+      setContacts(contactsBackup);
+      setFilteredContacts(contactsBackup);
     }
   };
 
-  const contactSearch = (event) => {
-    setContactQuery({ ...contactQuery, text: event.target.value });
-    const allContacts = contacts.filter((contact) => {
-      return contact.fullname
-        .toLowerCase()
-        .includes(event.target.value.toLowerCase());
-    });
+  // let filterTimeout;
+  const contactSearch = _.debounce(query => {
+    // setContactQuery({ ...contactQuery, text: event.target.value });
 
-    setFilteredContacts(allContacts);
-  };
+    // const allContacts = contacts.filter((contact) => {
+    //   return contact.fullname
+    //     .toLowerCase()
+    //     .includes(event.target.value.toLowerCase());
+    // });
+
+    // clearTimeout(filterTimeout);
+
+    if (!query) return setFilteredContacts([...contacts]);
+
+    // filterTimeout = setTimeout(() => {
+    // setFilteredContacts(contacts.filter((contact) => {
+    //   return contact.fullname
+    //     .toLowerCase()
+    //     .includes(query.toLowerCase());
+    // }));
+    // }, 1000)
+
+    setFilteredContacts(draft => draft.filter(c => c.fullname.toLowerCase().includes(query.toLowerCase())));
+
+    // setFilteredContacts(allContacts);
+  }, 1000);
 
   return (
     <ContactContext.Provider
       value={{
         loading,
         setLoading,
-        contact,
+        // contact,
         setContacts,
         setFilteredContacts,
-        contactQuery,
+        // contactQuery,
         contacts,
+        // errors,
         filteredContacts,
         groups,
-        onContactChange,
+        // onContactChange,
         deleteContact: confirmDelete,
         createContact: createContactForm,
         contactSearch,
       }}
     >
       <div className="App">
+        {/* <ToastContainer
+          rtl={true}
+          position="bottom-right"
+          theme="colored"
+        /> */}
+        <Toaster />
         <Navbar />
         <Routes>
           <Route path="/" element={<Navigate to="/contacts" />} />
